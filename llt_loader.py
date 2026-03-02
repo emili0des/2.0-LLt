@@ -479,7 +479,19 @@ class LLTApp:
         self.root.title(f"{APP_NAME} v{APP_VER}")
         self.root.minsize(850, 550)
         cfg = load_config()
-        self.root.geometry(cfg.get("geometry", "1050x750"))
+        # Restore saved geometry only if position is on-screen (prevents off-screen window
+        # when config was saved on a different monitor layout or PC)
+        geo = cfg.get("geometry", "1050x750")
+        try:
+            m = re.match(r'(\d+)x(\d+)\+(-?\d+)\+(-?\d+)', geo)
+            if m:
+                x, y = int(m.group(3)), int(m.group(4))
+                sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
+                if x < -100 or y < -100 or x > sw or y > sh:
+                    geo = f"{m.group(1)}x{m.group(2)}"  # keep size, drop position
+        except Exception:
+            geo = "1050x750"
+        self.root.geometry(geo)
         Theme.apply(root)
 
         # Tk variables (restored from config)
